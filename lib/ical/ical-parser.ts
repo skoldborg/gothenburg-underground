@@ -3,7 +3,7 @@ import { z } from 'zod';
 import {
   ICalDataSchema,
   ICalEventSchema,
-  type CalendarComponentI,
+  type ICalCalendarComponent,
   type ICalData,
   type ICalParseError,
   type ICalParseResult,
@@ -60,9 +60,10 @@ function parseIcalData(rawData: string): ICalData {
 
   return {
     events,
-    calendarName: (parsed.vcalendar as CalendarComponentI)?.prodid || undefined,
+    calendarName:
+      (parsed.vcalendar as ICalCalendarComponent)?.prodid || undefined,
     timezone:
-      (parsed.vcalendar as CalendarComponentI)?.timezone?.tzid || undefined,
+      (parsed.vcalendar as ICalCalendarComponent)?.timezone?.tzid || undefined,
   };
 }
 

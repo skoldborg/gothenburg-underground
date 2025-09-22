@@ -24,7 +24,7 @@ export const ICalDataSchema = z.object({
 export type ICalData = z.infer<typeof ICalDataSchema>;
 
 // Interface for parsed iCal calendar component
-export type CalendarComponentI = {
+export type ICalCalendarComponent = {
   prodid?: string;
   timezone?: {
     tzid?: string;

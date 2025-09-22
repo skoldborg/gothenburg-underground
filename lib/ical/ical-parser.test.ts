@@ -3,7 +3,7 @@ import {
   parseIcalFromUrl,
 } from '@/lib/ical/ical-parser';
 import type {
-  CalendarComponentI,
+  ICalCalendarComponent,
   ICalData,
   ICalEvent,
 } from '@/lib/ical/types/ical';
@@ -15,8 +15,8 @@ interface MockVEvent extends ICalEvent {
 }
 
 interface MockCalendarResponse {
-  [key: string]: MockVEvent | CalendarComponentI;
-  vcalendar: CalendarComponentI;
+  [key: string]: MockVEvent | ICalCalendarComponent;
+  vcalendar: ICalCalendarComponent;
 }
 
 // Mock node-ical
