@@ -33,7 +33,7 @@ describe('getEvents', () => {
     expect(global.fetch).toHaveBeenCalledWith(
       'http://localhost:3000/api/events',
       {
-        next: { revalidate: 3600 },
+        next: { revalidate: 86400 },
       },
     );
   });
@@ -61,7 +61,7 @@ describe('getEvents', () => {
     expect(global.fetch).toHaveBeenCalledWith(
       'https://example.com/api/events',
       {
-        next: { revalidate: 3600 },
+        next: { revalidate: 86400 },
       },
     );
 

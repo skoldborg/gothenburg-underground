@@ -1,10 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { EventList } from '@/components/event-list/event-list';
+import type { Event } from '@/services/events';
 
 // Mock the events service
-vi.mock('@/lib/events', () => ({
+vi.mock('@/services/events', () => ({
   getEvents: vi.fn(),
 }));
 
@@ -21,7 +21,7 @@ vi.mock('@headlessui/react', () => ({
 
 describe('EventList', () => {
   it('should render events list with correct data', async () => {
-    const mockEvents = [
+    const mockEvents: Event[] = [
       {
         uid: 'test-event-1@example.com',
         title: 'Test Event 1',
@@ -42,7 +42,7 @@ describe('EventList', () => {
     ];
 
     const { getEvents } = await import('@/services/events');
-    (getEvents as any).mockResolvedValue(mockEvents);
+    vi.mocked(getEvents).mockResolvedValue(mockEvents);
 
     const EventListComponent = await EventList();
     render(EventListComponent);
@@ -57,7 +57,7 @@ describe('EventList', () => {
 
   it('should render empty state when no events', async () => {
     const { getEvents } = await import('@/services/events');
-    (getEvents as any).mockResolvedValue([]);
+    vi.mocked(getEvents).mockResolvedValue([]);
 
     const EventListComponent = await EventList();
     render(EventListComponent);
@@ -67,7 +67,7 @@ describe('EventList', () => {
   });
 
   it('should handle events without optional fields', async () => {
-    const mockEvents = [
+    const mockEvents: Event[] = [
       {
         uid: 'test-event-1@example.com',
         title: 'Test Event',
@@ -78,7 +78,7 @@ describe('EventList', () => {
     ];
 
     const { getEvents } = await import('@/services/events');
-    (getEvents as any).mockResolvedValue(mockEvents);
+    vi.mocked(getEvents).mockResolvedValue(mockEvents);
 
     const EventListComponent = await EventList();
     render(EventListComponent);
