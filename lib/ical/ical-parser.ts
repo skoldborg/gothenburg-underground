@@ -1,4 +1,4 @@
-import type { Event } from '@/services/events';
+import type { EventData } from '@/services/events';
 import ical from 'node-ical';
 import { z } from 'zod';
 import { ICAL_CONFIG, ICAL_FEEDS } from './ical-config';
@@ -136,7 +136,7 @@ export async function parseIcalFromUrl(url: string): Promise<ICalParseResult> {
 export function convertIcalEventsToEvents(
   icalData: ICalData,
   feedName: string,
-): Event[] {
+): EventData[] {
   return icalData.events
     .map((event) => {
       // Format date as YYYY-MM-DD
@@ -165,7 +165,7 @@ export function convertIcalEventsToEvents(
 type FeedResult = {
   name: string;
   success: boolean;
-  events: Event[];
+  events: EventData[];
   error?: string;
 };
 
@@ -173,7 +173,7 @@ type FeedResult = {
  * Parses iCal feeds in parallel and merges the results
  */
 export async function parseIcalFeeds(): Promise<{
-  events: Event[];
+  events: EventData[];
   feedResults: FeedResult[];
 }> {
   console.log(`Processing ${ICAL_FEEDS.length} iCal feeds...`);

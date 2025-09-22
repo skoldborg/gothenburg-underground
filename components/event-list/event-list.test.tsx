@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { EventList } from '@/components/event-list/event-list';
-import type { Event } from '@/services/events';
+import type { EventData } from '@/services/events';
 
 // Mock the events service
 vi.mock('@/services/events', () => ({
@@ -21,7 +21,7 @@ vi.mock('@headlessui/react', () => ({
 
 describe('EventList', () => {
   it('should render events list with correct data', async () => {
-    const mockEvents: Event[] = [
+    const mockEvents: EventData[] = [
       {
         uid: 'test-event-1@example.com',
         title: 'Test Event 1',
@@ -66,7 +66,7 @@ describe('EventList', () => {
   });
 
   it('should handle events without optional fields', async () => {
-    const mockEvents: Event[] = [
+    const mockEvents: EventData[] = [
       {
         uid: 'test-event-1@example.com',
         title: 'Test Event',

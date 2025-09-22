@@ -1,7 +1,7 @@
-import { Event } from '@/services/events';
+import { EventData } from '@/services/events';
 import type { ReactNode } from 'react';
 
-export interface EventCardProps extends Omit<Event, 'id'> {
+export interface EventCardProps extends Omit<EventData, 'id'> {
   cta?: ReactNode; // optional action, e.g. a link button
 }
 

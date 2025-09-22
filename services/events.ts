@@ -1,4 +1,4 @@
-export type Event = {
+export type EventData = {
   uid: string;
   title: string;
   date: string;
@@ -8,7 +8,7 @@ export type Event = {
   end?: string;
 };
 
-export async function getEvents(): Promise<Event[]> {
+export async function getEvents(): Promise<EventData[]> {
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/events`,
     {
