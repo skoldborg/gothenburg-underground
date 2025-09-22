@@ -12,7 +12,7 @@ export async function getEvents(): Promise<Event[]> {
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/events`,
     {
-      next: { revalidate: 3600 }, // Revalidate every hour
+      next: { revalidate: 86400 }, // Revalidate once per day (24 hours)
     },
   );
 
