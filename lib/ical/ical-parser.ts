@@ -1,7 +1,7 @@
 import type { Event } from '@/services/events';
 import ical from 'node-ical';
 import { z } from 'zod';
-import { ICAL_FEEDS } from './ical-config';
+import { ICAL_CONFIG, ICAL_FEEDS } from './ical-config';
 import {
   ICalDataSchema,
   ICalEventSchema,
@@ -33,11 +33,27 @@ function parseIcalData(rawData: string): ICalData {
   const parsed = ical.parseICS(rawData);
   const events: Array<z.infer<typeof ICalEventSchema>> = [];
 
+  // Calculate date boundaries for filtering
+  const now = new Date();
+  const minDate = new Date(
+    now.getTime() + ICAL_CONFIG.minDaysInFuture * 24 * 60 * 60 * 1000,
+  );
+  const maxDate = new Date(
+    now.getTime() + ICAL_CONFIG.maxDaysInFuture * 24 * 60 * 60 * 1000,
+  );
+
   for (const key in parsed) {
     const component = parsed[key];
 
     // Only process VEVENT components
     if (component.type === 'VEVENT') {
+      // Check if event date is within the configured range
+      const eventStart = component.start
+        ? new Date(component.start)
+        : new Date();
+      if (eventStart < minDate || eventStart > maxDate) {
+        continue; // Skip events outside the date range
+      }
       try {
         // Transform the parsed event to match our schema
         const eventData = {
@@ -121,24 +137,26 @@ export function convertIcalEventsToEvents(
   icalData: ICalData,
   feedName: string,
 ): Event[] {
-  return icalData.events.map((event) => {
-    // Format date as YYYY-MM-DD
-    const date = event.start.toISOString().split('T')[0];
+  return icalData.events
+    .map((event) => {
+      // Format date as YYYY-MM-DD
+      const date = event.start.toISOString().split('T')[0];
 
-    // Format times as HH:MM
-    const start = event.start.toTimeString().slice(0, 5);
-    const end = event.end ? event.end.toTimeString().slice(0, 5) : undefined;
+      // Format times as HH:MM
+      const start = event.start.toTimeString().slice(0, 5);
+      const end = event.end ? event.end.toTimeString().slice(0, 5) : undefined;
 
-    return {
-      uid: event.uid,
-      title: event.summary,
-      date,
-      location: feedName, // Use the feed name as the location
-      description: event.description,
-      start,
-      end,
-    };
-  });
+      return {
+        uid: event.uid,
+        title: event.summary,
+        date,
+        location: feedName, // Use the feed name as the location
+        description: event.description,
+        start,
+        end,
+      };
+    })
+    .slice(0, ICAL_CONFIG.maxEventsPerFeed); // Limit to maxEventsPerFeed
 }
 
 /**

@@ -60,8 +60,10 @@ describe('iCal Parser', () => {
           summary: 'Test Event',
           description: 'This is a test event',
           location: 'Test Location',
-          start: new Date('2024-01-01T12:00:00Z'),
-          end: new Date('2024-01-01T14:00:00Z'),
+          start: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+          end: new Date(
+            Date.now() + 7 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000,
+          ), // 7 days from now + 2 hours
           url: 'https://example.com/event',
         },
         vcalendar: {
@@ -148,13 +150,13 @@ describe('iCal Parser', () => {
           type: 'VEVENT',
           uid: 'valid-event@example.com',
           summary: 'Valid Event',
-          start: new Date('2024-01-01T12:00:00Z'),
+          start: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
         },
         'invalid-event@example.com': {
           type: 'VEVENT',
           uid: 'invalid-event@example.com',
           summary: 'Invalid Event', // Add summary to make it valid
-          start: new Date('2024-01-01T12:00:00Z'),
+          start: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
         },
         vcalendar: {
           prodid: '-//Test//Test//EN',
@@ -183,6 +185,11 @@ describe('iCal Parser', () => {
 
   describe('convertIcalEventsToEvents', () => {
     it('should convert iCal events to event format', () => {
+      const startDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
+      const endDate = new Date(
+        Date.now() + 7 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000,
+      ); // 7 days from now + 2 hours
+
       const mockIcalData: ICalData = {
         events: [
           {
@@ -190,8 +197,8 @@ describe('iCal Parser', () => {
             summary: 'Test Event',
             description: 'This is a test event',
             location: 'Test Location',
-            start: new Date('2024-01-01T12:00:00Z'),
-            end: new Date('2024-01-01T14:00:00Z'),
+            start: startDate,
+            end: endDate,
             url: 'https://example.com/event',
           },
         ],
@@ -205,21 +212,23 @@ describe('iCal Parser', () => {
       expect(result[0]).toEqual({
         uid: 'test-event-1@example.com',
         title: 'Test Event',
-        date: '2024-01-01',
+        date: startDate.toISOString().split('T')[0],
         location: 'Test Venue',
         description: 'This is a test event',
-        start: '13:00', // UTC+1 in local timezone
-        end: '15:00', // UTC+1 in local timezone
+        start: startDate.toTimeString().slice(0, 5),
+        end: endDate.toTimeString().slice(0, 5),
       });
     });
 
     it('should handle events without end time', () => {
+      const startDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
+
       const mockIcalData: ICalData = {
         events: [
           {
             uid: 'test-event-2@example.com',
             summary: 'Test Event No End',
-            start: new Date('2024-01-01T12:00:00Z'),
+            start: startDate,
           },
         ],
         calendarName: 'Test Calendar',
@@ -231,21 +240,23 @@ describe('iCal Parser', () => {
       expect(result[0]).toEqual({
         uid: 'test-event-2@example.com',
         title: 'Test Event No End',
-        date: '2024-01-01',
+        date: startDate.toISOString().split('T')[0],
         location: 'Test Venue',
         description: undefined,
-        start: '13:00', // UTC+1 in local timezone
+        start: startDate.toTimeString().slice(0, 5),
         end: undefined,
       });
     });
 
     it('should handle events without location', () => {
+      const startDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
+
       const mockIcalData: ICalData = {
         events: [
           {
             uid: 'test-event-3@example.com',
             summary: 'Test Event No Location',
-            start: new Date('2024-01-01T12:00:00Z'),
+            start: startDate,
           },
         ],
         calendarName: 'Test Calendar',
