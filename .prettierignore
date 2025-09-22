@@ -1,0 +1,5 @@
+# This file exists for editor integrations that expect .prettierignore.
+# CI and npm scripts use --ignore-path .gitignore, so this can stay minimal.
+# Keep in sync with .gitignore if you rely on editor-based formatting.
+
+# Optional local-only ignores can go here:
