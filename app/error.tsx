@@ -41,14 +41,6 @@ export default function Error({
               >
                 Try again
               </button>
-              <a
-                href="https://www.monument031.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-md border border-red-600 px-3 py-2 text-sm font-medium text-red-400 hover:bg-red-600/10 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-zinc-900"
-              >
-                Visit source
-              </a>
             </div>
           </div>
         </div>

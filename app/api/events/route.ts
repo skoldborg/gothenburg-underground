@@ -1,26 +1,32 @@
-import {
-  convertIcalToUndergroundEvents,
-  parseIcalFromUrl,
-} from '@/lib/ical/ical-parser';
+import { parseIcalFeeds } from '@/lib/ical/ical-parser';
 import { NextResponse } from 'next/server';
-
-const ICAL_URL =
-  'https://www.monument031.com/?post_type=tribe_events&ical=1&eventDisplay=list';
 
 export async function GET() {
   try {
-    const result = await parseIcalFromUrl(ICAL_URL);
+    const result = await parseIcalFeeds();
 
-    if (!result.success) {
-      return NextResponse.json(
-        { error: result.error.message },
-        { status: 500 },
+    // Log feed processing results for monitoring
+    const successfulFeeds = result.feedResults.filter((feed) => feed.success);
+    const failedFeeds = result.feedResults.filter((feed) => !feed.success);
+
+    if (failedFeeds.length > 0) {
+      console.warn(
+        'Some feeds failed to load:',
+        failedFeeds.map((feed) => `${feed.name}: ${feed.error}`),
       );
     }
 
-    const events = convertIcalToUndergroundEvents(result.data);
-
-    return NextResponse.json({ events });
+    // Return events even if some feeds failed (graceful degradation)
+    return NextResponse.json({
+      events: result.events,
+      // Include metadata about feed processing for debugging
+      _metadata: {
+        totalFeeds: result.feedResults.length,
+        successfulFeeds: successfulFeeds.length,
+        failedFeeds: failedFeeds.length,
+        totalEvents: result.events.length,
+      },
+    });
   } catch (error) {
     console.error('Error fetching events:', error);
     return NextResponse.json(

@@ -1,5 +1,7 @@
+import type { Event } from '@/services/events';
 import ical from 'node-ical';
 import { z } from 'zod';
+import { ICAL_FEEDS } from './ical-config';
 import {
   ICalDataSchema,
   ICalEventSchema,
@@ -115,15 +117,10 @@ export async function parseIcalFromUrl(url: string): Promise<ICalParseResult> {
 /**
  * Converts iCal events to our UndergroundEvent format
  */
-export function convertIcalToUndergroundEvents(icalData: ICalData): Array<{
-  uid: string;
-  title: string;
-  date: string;
-  location: string;
-  description?: string;
-  start?: string;
-  end?: string;
-}> {
+export function convertIcalEventsToEvents(
+  icalData: ICalData,
+  feedName: string,
+): Event[] {
   return icalData.events.map((event) => {
     // Format date as YYYY-MM-DD
     const date = event.start.toISOString().split('T')[0];
@@ -136,10 +133,131 @@ export function convertIcalToUndergroundEvents(icalData: ICalData): Array<{
       uid: event.uid,
       title: event.summary,
       date,
-      location: event.location || 'TBA',
+      location: feedName, // Use the feed name as the location
       description: event.description,
       start,
       end,
     };
   });
+}
+
+/**
+ * Result type for individual feed processing
+ */
+type FeedResult = {
+  name: string;
+  success: boolean;
+  events: Event[];
+  error?: string;
+};
+
+/**
+ * Parses iCal feeds in parallel and merges the results
+ */
+export async function parseIcalFeeds(): Promise<{
+  events: Event[];
+  feedResults: FeedResult[];
+}> {
+  console.log(`Processing ${ICAL_FEEDS.length} iCal feeds...`);
+
+  // Process all feeds in parallel
+  const feedPromises = ICAL_FEEDS.map(async (feed): Promise<FeedResult> => {
+    console.log(`Fetching events from ${feed.name}...`);
+
+    try {
+      const result = await parseIcalFromUrl(feed.url);
+
+      if (!result.success) {
+        console.warn(
+          `Failed to parse feed ${feed.name}:`,
+          result.error.message,
+        );
+        return {
+          name: feed.name,
+          success: false,
+          events: [],
+          error: result.error.message,
+        };
+      }
+
+      const events = convertIcalEventsToEvents(result.data, feed.name);
+      console.log(
+        `Successfully fetched ${events.length} events from ${feed.name}`,
+      );
+
+      return {
+        name: feed.name,
+        success: true,
+        events,
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      console.error(`Error processing feed ${feed.name}:`, errorMessage);
+
+      return {
+        name: feed.name,
+        success: false,
+        events: [],
+        error: errorMessage,
+      };
+    }
+  });
+
+  // Wait for all feeds to complete (using allSettled to handle partial failures)
+  const feedResults = await Promise.allSettled(feedPromises);
+
+  // Extract results and handle any unexpected rejections
+  const processedResults: FeedResult[] = feedResults.map((result, index) => {
+    if (result.status === 'fulfilled') {
+      return result.value;
+    } else {
+      const feedName = ICAL_FEEDS[index]?.name || `Feed ${index + 1}`;
+      console.error(
+        `Unexpected rejection for feed ${feedName}:`,
+        result.reason,
+      );
+      return {
+        name: feedName,
+        success: false,
+        events: [],
+        error:
+          result.reason instanceof Error
+            ? result.reason.message
+            : 'Unexpected error',
+      };
+    }
+  });
+
+  // Merge all successful events
+  const allEvents = processedResults
+    .filter((result) => result.success)
+    .flatMap((result) => result.events);
+
+  // Sort events by date and time
+  allEvents.sort((a, b) => {
+    const dateCompare = a.date.localeCompare(b.date);
+    if (dateCompare !== 0) return dateCompare;
+
+    // If same date, sort by start time
+    const aStart = a.start || '00:00';
+    const bStart = b.start || '00:00';
+    return aStart.localeCompare(bStart);
+  });
+
+  const successfulFeeds = processedResults.filter(
+    (result) => result.success,
+  ).length;
+  const failedFeeds = processedResults.filter(
+    (result) => !result.success,
+  ).length;
+
+  console.log(
+    `Feed processing complete: ${successfulFeeds} successful, ${failedFeeds} failed, ${allEvents.length} total events`,
+  );
+
+  return {
+    events: allEvents,
+    feedResults: processedResults,
+  };
 }

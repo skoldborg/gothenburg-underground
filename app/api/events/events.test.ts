@@ -3,9 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock the iCal parser
 vi.mock('@/lib/ical/ical-parser', () => ({
-  parseIcalFromUrl: vi.fn(),
-  convertIcalToUndergroundEvents: vi.fn(),
+  parseIcalFeeds: vi.fn(),
 }));
+
+// Import the mocked function
+import { parseIcalFeeds } from '@/lib/ical/ical-parser';
 
 describe('/api/events', () => {
   beforeEach(() => {
@@ -13,22 +15,7 @@ describe('/api/events', () => {
   });
 
   it('should return events on successful parsing', async () => {
-    const mockIcalData = {
-      events: [
-        {
-          uid: 'test-event-1@example.com',
-          summary: 'Test Event',
-          description: 'Test Description',
-          location: 'Test Location',
-          start: new Date('2024-01-01T12:00:00Z'),
-          end: new Date('2024-01-01T14:00:00Z'),
-        },
-      ],
-      calendarName: 'Test Calendar',
-      timezone: 'UTC',
-    };
-
-    const mockUndergroundEvents = [
+    const mockEvents = [
       {
         uid: 'test-event-1@example.com',
         title: 'Test Event',
@@ -40,52 +27,99 @@ describe('/api/events', () => {
       },
     ];
 
-    const { parseIcalFromUrl, convertIcalToUndergroundEvents } = await import(
-      '@/lib/ical/ical-parser'
-    );
+    const mockFeedResults = [
+      {
+        name: 'Test Feed',
+        success: true,
+        events: mockEvents,
+      },
+    ];
 
-    vi.mocked(parseIcalFromUrl).mockResolvedValue({
-      success: true,
-      data: mockIcalData,
+    vi.mocked(parseIcalFeeds).mockResolvedValue({
+      events: mockEvents,
+      feedResults: mockFeedResults,
     });
-
-    vi.mocked(convertIcalToUndergroundEvents).mockReturnValue(
-      mockUndergroundEvents,
-    );
 
     const response = await GET();
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.events).toEqual(mockUndergroundEvents);
-    expect(convertIcalToUndergroundEvents).toHaveBeenCalledWith(mockIcalData);
+    expect(data.events).toEqual(mockEvents);
+    expect(data._metadata).toEqual({
+      totalFeeds: 1,
+      successfulFeeds: 1,
+      failedFeeds: 0,
+      totalEvents: 1,
+    });
+    expect(parseIcalFeeds).toHaveBeenCalled();
   });
 
   it('should return error when parsing fails', async () => {
-    const { parseIcalFromUrl } = await import('@/lib/ical/ical-parser');
-
-    vi.mocked(parseIcalFromUrl).mockResolvedValue({
-      success: false,
-      error: {
-        type: 'FETCH_ERROR',
-        message: 'Failed to fetch iCal data',
-        details: 'Network error',
-      },
-    });
+    vi.mocked(parseIcalFeeds).mockRejectedValue(
+      new Error('Failed to fetch events'),
+    );
 
     const response = await GET();
     const data = await response.json();
 
     expect(response.status).toBe(500);
-    expect(data.error).toBe('Failed to fetch iCal data');
+    expect(data.error).toBe('Failed to fetch events');
+  });
+
+  it('should handle partial feed failures gracefully', async () => {
+    const mockEvents = [
+      {
+        uid: 'test-event-1@example.com',
+        title: 'Test Event',
+        date: '2024-01-01',
+        location: 'Test Location',
+        description: 'Test Description',
+        start: '12:00',
+        end: '14:00',
+      },
+    ];
+
+    const mockFeedResults = [
+      {
+        name: 'Successful Feed',
+        success: true,
+        events: mockEvents,
+      },
+      {
+        name: 'Failed Feed',
+        success: false,
+        events: [],
+        error: 'Network error',
+      },
+    ];
+
+    vi.mocked(parseIcalFeeds).mockResolvedValue({
+      events: mockEvents,
+      feedResults: mockFeedResults,
+    });
+
+    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const response = await GET();
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.events).toEqual(mockEvents);
+    expect(data._metadata).toEqual({
+      totalFeeds: 2,
+      successfulFeeds: 1,
+      failedFeeds: 1,
+      totalEvents: 1,
+    });
+    expect(consoleSpy).toHaveBeenCalledWith('Some feeds failed to load:', [
+      'Failed Feed: Network error',
+    ]);
+
+    consoleSpy.mockRestore();
   });
 
   it('should handle unexpected errors', async () => {
-    const { parseIcalFromUrl } = await import('@/lib/ical/ical-parser');
-
-    vi.mocked(parseIcalFromUrl).mockRejectedValue(
-      new Error('Unexpected error'),
-    );
+    vi.mocked(parseIcalFeeds).mockRejectedValue(new Error('Unexpected error'));
 
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 

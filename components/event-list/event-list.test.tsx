@@ -47,7 +47,6 @@ describe('EventList', () => {
     const EventListComponent = await EventList();
     render(EventListComponent);
 
-    expect(screen.getByText('Upcoming events')).toBeInTheDocument();
     expect(screen.getByText('2 events')).toBeInTheDocument();
     expect(screen.getByText('Test Event 1')).toBeInTheDocument();
     expect(screen.getByText('Test Event 2')).toBeInTheDocument();

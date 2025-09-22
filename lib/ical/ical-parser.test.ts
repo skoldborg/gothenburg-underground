@@ -1,5 +1,5 @@
 import {
-  convertIcalToUndergroundEvents,
+  convertIcalEventsToEvents,
   parseIcalFromUrl,
 } from '@/lib/ical/ical-parser';
 import type {
@@ -181,8 +181,8 @@ describe('iCal Parser', () => {
     });
   });
 
-  describe('convertIcalToUndergroundEvents', () => {
-    it('should convert iCal events to underground event format', () => {
+  describe('convertIcalEventsToEvents', () => {
+    it('should convert iCal events to event format', () => {
       const mockIcalData: ICalData = {
         events: [
           {
@@ -199,14 +199,14 @@ describe('iCal Parser', () => {
         timezone: 'UTC',
       };
 
-      const result = convertIcalToUndergroundEvents(mockIcalData);
+      const result = convertIcalEventsToEvents(mockIcalData, 'Test Venue');
 
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
         uid: 'test-event-1@example.com',
         title: 'Test Event',
         date: '2024-01-01',
-        location: 'Test Location',
+        location: 'Test Venue',
         description: 'This is a test event',
         start: '13:00', // UTC+1 in local timezone
         end: '15:00', // UTC+1 in local timezone
@@ -225,14 +225,14 @@ describe('iCal Parser', () => {
         calendarName: 'Test Calendar',
       };
 
-      const result = convertIcalToUndergroundEvents(mockIcalData);
+      const result = convertIcalEventsToEvents(mockIcalData, 'Test Venue');
 
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
         uid: 'test-event-2@example.com',
         title: 'Test Event No End',
         date: '2024-01-01',
-        location: 'TBA',
+        location: 'Test Venue',
         description: undefined,
         start: '13:00', // UTC+1 in local timezone
         end: undefined,
@@ -251,10 +251,10 @@ describe('iCal Parser', () => {
         calendarName: 'Test Calendar',
       };
 
-      const result = convertIcalToUndergroundEvents(mockIcalData);
+      const result = convertIcalEventsToEvents(mockIcalData, 'Test Venue');
 
       expect(result).toHaveLength(1);
-      expect(result[0].location).toBe('TBA');
+      expect(result[0].location).toBe('Test Venue');
     });
   });
 });
