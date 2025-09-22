@@ -1,4 +1,4 @@
-import { EventList } from '@/components/event-list';
+import { EventList } from '@/components/event-list/event-list';
 
 export default function Home() {
   return (
@@ -8,7 +8,7 @@ export default function Home() {
           Gothenburg Underground
         </h1>
         <p className="max-w-prose text-sm text-zinc-400">
-          Independent electronic music, DIY venues, late nights. Curated weekly.
+          Underground music, DIY venues, late nights. Curated weekly.
         </p>
       </div>
 

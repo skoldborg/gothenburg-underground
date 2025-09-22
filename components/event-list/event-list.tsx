@@ -1,5 +1,5 @@
 import { Transition } from '@headlessui/react';
-import { EventCard } from './ui/event-card';
+import { EventCard } from '../ui/event-card';
 import { getEvents } from '@/services/events';
 
 export const EventList = async () => {

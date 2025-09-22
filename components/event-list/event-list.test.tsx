@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { EventList } from '@/components/event-list';
+import { EventList } from '@/components/event-list/event-list';
 
 // Mock the events service
 vi.mock('@/lib/events', () => ({
