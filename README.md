@@ -10,10 +10,4 @@ At the moment this is application is just a proof of concept and only collects d
 npm run dev
 ```
 
-## Testing
-s
-```bash
-npm run test
-```
-
 Running on [http://localhost:3000](http://localhost:3000).
